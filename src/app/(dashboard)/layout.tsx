@@ -36,7 +36,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   return (
     <div className="layout">
       {/* Mobile Header */}
-      <div style={{ position: "relative", zIndex: 60, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "1rem", borderBottom: "1px solid var(--border-color)", backgroundColor: "var(--bg-card)" }} className="md-hidden">
+      <div style={{ position: "relative", zIndex: 60, alignItems: "center", justifyContent: "space-between", padding: "1rem", borderBottom: "1px solid var(--border-color)", backgroundColor: "var(--bg-card)" }} className="md-hidden">
         <div style={{ fontWeight: "800", fontSize: "1.25rem", color: "var(--primary)", letterSpacing: "-0.02em" }}>Tracking Rekap</div>
         <button onClick={() => setMobileOpen(!mobileOpen)} className="btn btn-outline" style={{ padding: "0.5rem" }}>
           {mobileOpen ? <X size={20} /> : <Menu size={20} />}
