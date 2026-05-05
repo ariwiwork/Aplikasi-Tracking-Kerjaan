@@ -1,0 +1,48 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model User {
+  id       Int    @id @default(autoincrement())
+  username String @unique
+  password String
+}
+
+model Client {
+  id        Int       @id @default(autoincrement())
+  name      String
+  isActive  Boolean   @default(true)
+  createdAt DateTime  @default(now())
+  projects  Project[]
+}
+
+model Project {
+  id            Int       @id @default(autoincrement())
+  projectName   String
+  duration      String    
+  startDate     DateTime
+  endDate       DateTime?
+  status        String    
+  price         Float
+  paymentStatus String    
+  linkUrl       String?
+  notes         String?
+  fileUrl       String?   
+  clientId      Int?
+  client        Client?   @relation(fields: [clientId], references: [id])
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model Expense {
+  id          Int      @id @default(autoincrement())
+  amount      Float
+  description String
+  date        DateTime
+  createdAt   DateTime @default(now())
+}
