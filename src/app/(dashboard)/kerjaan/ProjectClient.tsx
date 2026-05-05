@@ -28,6 +28,10 @@ export default function ProjectClient({ initialProjects }: { initialProjects: an
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState("Semua");
   const [activeTabMonth, setActiveTabMonth] = useState((new Date().getMonth() + 1).toString());
+  
+  // Pagination
+  const [currentPage, setCurrentPage] = useState(1);
+  const rowsPerPage = 10;
 
   const handleOpenModal = (project: any = null) => {
     if (project) {
@@ -90,6 +94,14 @@ export default function ProjectClient({ initialProjects }: { initialProjects: an
       return matchSearch && matchStatus && matchMonth;
     });
   }, [projects, searchTerm, filterStatus, activeTabMonth]);
+
+  // Reset page when filters change
+  useMemo(() => {
+    setCurrentPage(1);
+  }, [searchTerm, filterStatus, activeTabMonth]);
+
+  const totalPages = Math.ceil(filteredProjects.length / rowsPerPage);
+  const paginatedProjects = filteredProjects.slice((currentPage - 1) * rowsPerPage, currentPage * rowsPerPage);
 
   const exportPDF = () => {
     const doc = new jsPDF("landscape");
@@ -213,9 +225,9 @@ export default function ProjectClient({ initialProjects }: { initialProjects: an
                 <td colSpan={8} style={{ textAlign: "center", color: "var(--text-muted)", padding: "3rem 0" }}>Tidak ada data kerjaan di bulan ini.</td>
               </tr>
             ) : (
-              filteredProjects.map((p, i) => (
+              paginatedProjects.map((p, i) => (
                 <tr key={p.id}>
-                  <td>{i + 1}</td>
+                  <td>{(currentPage - 1) * rowsPerPage + i + 1}</td>
                   <td style={{ fontWeight: "600" }}>{p.projectName}</td>
                   <td>{p.duration}</td>
                   <td>{new Date(p.startDate).toLocaleDateString("id-ID")}</td>
@@ -242,6 +254,36 @@ export default function ProjectClient({ initialProjects }: { initialProjects: an
           </tbody>
         </table>
       </div>
+
+      {/* Pagination UI */}
+      {totalPages > 1 && (
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "1rem", paddingTop: "1rem", borderTop: "1px solid var(--border-color)" }}>
+          <div style={{ fontSize: "0.875rem", color: "var(--text-muted)" }}>
+            Menampilkan {(currentPage - 1) * rowsPerPage + 1} hingga {Math.min(currentPage * rowsPerPage, filteredProjects.length)} dari {filteredProjects.length} data
+          </div>
+          <div style={{ display: "flex", gap: "0.5rem" }}>
+            <button 
+              onClick={() => setCurrentPage(p => Math.max(1, p - 1))} 
+              disabled={currentPage === 1}
+              className="btn btn-outline" 
+              style={{ padding: "0.4rem 0.8rem", opacity: currentPage === 1 ? 0.5 : 1 }}
+            >
+              Sebelumnya
+            </button>
+            <div style={{ display: "flex", alignItems: "center", padding: "0 0.5rem", fontWeight: "600" }}>
+              {currentPage} / {totalPages}
+            </div>
+            <button 
+              onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} 
+              disabled={currentPage === totalPages}
+              className="btn btn-outline" 
+              style={{ padding: "0.4rem 0.8rem", opacity: currentPage === totalPages ? 0.5 : 1 }}
+            >
+              Selanjutnya
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Modal */}
       {isModalOpen && (

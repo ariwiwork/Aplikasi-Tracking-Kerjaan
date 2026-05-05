@@ -20,6 +20,10 @@ export default function FinanceClient({ initialLedger }: { initialLedger: any[] 
   const [filterType, setFilterType] = useState("Semua");
   const [filterMonth, setFilterMonth] = useState("Semua");
 
+  // Pagination
+  const [currentPage, setCurrentPage] = useState(1);
+  const rowsPerPage = 10;
+
   const handleOpenModal = () => {
     setFormData({
       description: "",
@@ -56,6 +60,14 @@ export default function FinanceClient({ initialLedger }: { initialLedger: any[] 
       return matchSearch && matchType && matchMonth;
     });
   }, [ledger, searchTerm, filterType, filterMonth]);
+
+  // Reset page when filters change
+  useMemo(() => {
+    setCurrentPage(1);
+  }, [searchTerm, filterType, filterMonth]);
+
+  const totalPages = Math.ceil(filteredLedger.length / rowsPerPage);
+  const paginatedLedger = filteredLedger.slice((currentPage - 1) * rowsPerPage, currentPage * rowsPerPage);
 
   const exportPDF = () => {
     const doc = new jsPDF("portrait");
@@ -195,9 +207,9 @@ export default function FinanceClient({ initialLedger }: { initialLedger: any[] 
                   <td colSpan={6} style={{ textAlign: "center", color: "var(--text-muted)", padding: "3rem 0" }}>Tidak ada riwayat keuangan yang sesuai filter</td>
                 </tr>
               ) : (
-                filteredLedger.map((l, i) => (
+                paginatedLedger.map((l, i) => (
                   <tr key={l.id}>
-                    <td>{i + 1}</td>
+                    <td>{(currentPage - 1) * rowsPerPage + i + 1}</td>
                     <td>{new Date(l.date).toLocaleDateString("id-ID")}</td>
                     <td style={{ fontWeight: "600" }}>
                       {l.description}
@@ -226,6 +238,36 @@ export default function FinanceClient({ initialLedger }: { initialLedger: any[] 
             </tbody>
           </table>
         </div>
+        
+        {/* Pagination UI */}
+        {totalPages > 1 && (
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "1rem", paddingTop: "1rem", borderTop: "1px solid var(--border-color)" }}>
+            <div style={{ fontSize: "0.875rem", color: "var(--text-muted)" }}>
+              Menampilkan {(currentPage - 1) * rowsPerPage + 1} hingga {Math.min(currentPage * rowsPerPage, filteredLedger.length)} dari {filteredLedger.length} data
+            </div>
+            <div style={{ display: "flex", gap: "0.5rem" }}>
+              <button 
+                onClick={() => setCurrentPage(p => Math.max(1, p - 1))} 
+                disabled={currentPage === 1}
+                className="btn btn-outline" 
+                style={{ padding: "0.4rem 0.8rem", opacity: currentPage === 1 ? 0.5 : 1 }}
+              >
+                Sebelumnya
+              </button>
+              <div style={{ display: "flex", alignItems: "center", padding: "0 0.5rem", fontWeight: "600" }}>
+                {currentPage} / {totalPages}
+              </div>
+              <button 
+                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} 
+                disabled={currentPage === totalPages}
+                className="btn btn-outline" 
+                style={{ padding: "0.4rem 0.8rem", opacity: currentPage === totalPages ? 0.5 : 1 }}
+              >
+                Selanjutnya
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Modal */}
