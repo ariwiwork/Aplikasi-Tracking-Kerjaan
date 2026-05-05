@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from "react";
 import { createProject, updateProject, deleteProject } from "@/app/actions/project";
-import { FileDown, Plus, Pencil, Trash2, X, Download, Search, Filter } from "lucide-react";
+import { FileDown, Plus, Pencil, Trash2, X, Search, Filter } from "lucide-react";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
@@ -10,23 +10,24 @@ export default function ProjectClient({ initialProjects }: { initialProjects: an
   const [projects, setProjects] = useState(initialProjects);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
+  
+  // Default values
   const [formData, setFormData] = useState({
     projectName: "",
-    duration: "",
+    duration: "15 Menit",
     startDate: "",
     endDate: "",
-    status: "Baru",
-    price: "",
-    paymentStatus: "Belum Lunas",
+    status: "Progress",
+    price: "50000",
+    paymentStatus: "Belum Bayar",
     linkUrl: "",
     notes: "",
-    fileUrl: "",
   });
 
   // Filter & Search state
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState("Semua");
-  const [filterMonth, setFilterMonth] = useState("Semua");
+  const [activeTabMonth, setActiveTabMonth] = useState((new Date().getMonth() + 1).toString());
 
   const handleOpenModal = (project: any = null) => {
     if (project) {
@@ -41,21 +42,19 @@ export default function ProjectClient({ initialProjects }: { initialProjects: an
         paymentStatus: project.paymentStatus,
         linkUrl: project.linkUrl || "",
         notes: project.notes || "",
-        fileUrl: project.fileUrl || "",
       });
     } else {
       setEditingId(null);
       setFormData({
         projectName: "",
-        duration: "",
+        duration: "15 Menit",
         startDate: new Date().toISOString().split('T')[0],
         endDate: "",
-        status: "Baru",
-        price: "",
-        paymentStatus: "Belum Lunas",
+        status: "Progress",
+        price: "50000",
+        paymentStatus: "Belum Bayar",
         linkUrl: "",
         notes: "",
-        fileUrl: "",
       });
     }
     setIsModalOpen(true);
@@ -85,19 +84,16 @@ export default function ProjectClient({ initialProjects }: { initialProjects: an
       const matchSearch = p.projectName.toLowerCase().includes(searchTerm.toLowerCase());
       const matchStatus = filterStatus === "Semua" || p.status === filterStatus;
       
-      let matchMonth = true;
-      if (filterMonth !== "Semua") {
-        const monthNum = new Date(p.startDate).getMonth() + 1;
-        matchMonth = monthNum.toString() === filterMonth;
-      }
+      const monthNum = new Date(p.startDate).getMonth() + 1;
+      const matchMonth = monthNum.toString() === activeTabMonth;
 
       return matchSearch && matchStatus && matchMonth;
     });
-  }, [projects, searchTerm, filterStatus, filterMonth]);
+  }, [projects, searchTerm, filterStatus, activeTabMonth]);
 
   const exportPDF = () => {
     const doc = new jsPDF("landscape");
-    doc.text("Laporan Kerjaan", 14, 15);
+    doc.text(`Laporan Kerjaan - Bulan ${activeTabMonth}`, 14, 15);
     
     const tableData = filteredProjects.map((p, i) => [
       i + 1,
@@ -110,12 +106,12 @@ export default function ProjectClient({ initialProjects }: { initialProjects: an
     ]);
 
     autoTable(doc, {
-      head: [["No", "Nama Project", "Durasi", "Tgl Mulai", "Status", "Harga", "Payment"]],
+      head: [["No", "Nama Project", "Durasi", "Tgl Mulai", "Status", "Harga", "Pembayaran"]],
       body: tableData,
       startY: 20,
     });
 
-    doc.save("Laporan_Kerjaan.pdf");
+    doc.save(`Laporan_Kerjaan_Bulan_${activeTabMonth}.pdf`);
   };
 
   const formatRp = (num: number) => {
@@ -124,13 +120,21 @@ export default function ProjectClient({ initialProjects }: { initialProjects: an
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case "Baru": return "badge-info";
       case "Progress": return "badge-warning";
       case "Selesai": return "badge-success";
       case "Belum Selesai": return "badge-danger";
       default: return "badge-info";
     }
   };
+
+  // Generate options
+  const durationOptions = Array.from({ length: 120 }, (_, i) => `${i + 1} Menit`);
+  const priceOptions = [];
+  for (let p = 5000; p <= 1000000; p += 5000) {
+    priceOptions.push(p);
+  }
+
+  const months = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
 
   return (
     <div className="card">
@@ -144,6 +148,25 @@ export default function ProjectClient({ initialProjects }: { initialProjects: an
             <Plus size={18} /> Tambah Project
           </button>
         </div>
+      </div>
+
+      {/* Tabs Bulan */}
+      <div style={{ display: "flex", overflowX: "auto", gap: "0.5rem", paddingBottom: "0.5rem", marginBottom: "1.5rem", borderBottom: "1px solid var(--border-color)" }}>
+        {months.map((m, i) => (
+          <button 
+            key={i} 
+            onClick={() => setActiveTabMonth((i + 1).toString())}
+            style={{ 
+              padding: "0.5rem 1rem", 
+              fontWeight: activeTabMonth === (i + 1).toString() ? "700" : "500",
+              color: activeTabMonth === (i + 1).toString() ? "var(--primary)" : "var(--text-muted)",
+              borderBottom: activeTabMonth === (i + 1).toString() ? "2px solid var(--primary)" : "2px solid transparent",
+              whiteSpace: "nowrap"
+            }}
+          >
+            {m}
+          </button>
+        ))}
       </div>
 
       <div style={{ display: "flex", gap: "1rem", marginBottom: "1.5rem", flexWrap: "wrap", alignItems: "center", backgroundColor: "var(--bg-color)", padding: "1rem", borderRadius: "var(--radius)", border: "1px solid var(--border-color)" }}>
@@ -163,28 +186,9 @@ export default function ProjectClient({ initialProjects }: { initialProjects: an
           <Filter size={18} style={{ color: "var(--text-muted)" }} />
           <select className="input" style={{ width: "auto" }} value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)}>
             <option value="Semua">Semua Status</option>
-            <option value="Baru">Baru</option>
             <option value="Progress">Progress</option>
             <option value="Selesai">Selesai</option>
             <option value="Belum Selesai">Belum Selesai</option>
-          </select>
-        </div>
-
-        <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-          <select className="input" style={{ width: "auto" }} value={filterMonth} onChange={(e) => setFilterMonth(e.target.value)}>
-            <option value="Semua">Semua Bulan</option>
-            <option value="1">Januari</option>
-            <option value="2">Februari</option>
-            <option value="3">Maret</option>
-            <option value="4">April</option>
-            <option value="5">Mei</option>
-            <option value="6">Juni</option>
-            <option value="7">Juli</option>
-            <option value="8">Agustus</option>
-            <option value="9">September</option>
-            <option value="10">Oktober</option>
-            <option value="11">November</option>
-            <option value="12">Desember</option>
           </select>
         </div>
       </div>
@@ -199,14 +203,14 @@ export default function ProjectClient({ initialProjects }: { initialProjects: an
               <th>Tgl Mulai</th>
               <th>Status</th>
               <th>Harga</th>
-              <th>Payment</th>
+              <th>Pembayaran</th>
               <th style={{ textAlign: "right" }}>Aksi</th>
             </tr>
           </thead>
           <tbody>
             {filteredProjects.length === 0 ? (
               <tr>
-                <td colSpan={8} style={{ textAlign: "center", color: "var(--text-muted)", padding: "3rem 0" }}>Tidak ada data kerjaan yang sesuai filter</td>
+                <td colSpan={8} style={{ textAlign: "center", color: "var(--text-muted)", padding: "3rem 0" }}>Tidak ada data kerjaan di bulan ini.</td>
               </tr>
             ) : (
               filteredProjects.map((p, i) => (
@@ -218,17 +222,12 @@ export default function ProjectClient({ initialProjects }: { initialProjects: an
                   <td><span className={`badge ${getStatusBadge(p.status)}`}>{p.status}</span></td>
                   <td style={{ fontWeight: "600" }}>{formatRp(p.price)}</td>
                   <td>
-                    <span className={`badge ${p.paymentStatus === "Lunas" ? "badge-success" : p.paymentStatus === "DP" ? "badge-info" : "badge-warning"}`}>
+                    <span className={`badge ${["Bank", "E Wallet"].includes(p.paymentStatus) ? "badge-success" : "badge-warning"}`}>
                       {p.paymentStatus}
                     </span>
                   </td>
                   <td>
                     <div style={{ display: "flex", gap: "0.5rem", justifyContent: "flex-end" }}>
-                      {p.fileUrl && (
-                        <a href={p.fileUrl} target="_blank" className="btn btn-outline" style={{ padding: "0.4rem", borderRadius: "8px" }} title="Download Dokumen">
-                          <Download size={16} />
-                        </a>
-                      )}
                       <button onClick={() => handleOpenModal(p)} className="btn btn-outline" style={{ padding: "0.4rem", color: "var(--info)", borderColor: "transparent", backgroundColor: "rgba(59, 130, 246, 0.1)", borderRadius: "8px" }}>
                         <Pencil size={16} />
                       </button>
@@ -259,11 +258,13 @@ export default function ProjectClient({ initialProjects }: { initialProjects: an
               <div className="grid grid-cols-2">
                 <div>
                   <label className="label">Nama Project</label>
-                  <input type="text" className="input" value={formData.projectName} onChange={(e) => setFormData({...formData, projectName: e.target.value})} required placeholder="Contoh: Pembuatan Website E-Commerce" />
+                  <input type="text" className="input" value={formData.projectName} onChange={(e) => setFormData({...formData, projectName: e.target.value})} required placeholder="Contoh: Desain Banner" />
                 </div>
                 <div>
-                  <label className="label">Durasi</label>
-                  <input type="text" className="input" placeholder="Contoh: 2 Minggu" value={formData.duration} onChange={(e) => setFormData({...formData, duration: e.target.value})} required />
+                  <label className="label">Durasi (Menit)</label>
+                  <select className="input" value={formData.duration} onChange={(e) => setFormData({...formData, duration: e.target.value})} required>
+                    {durationOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                  </select>
                 </div>
               </div>
 
@@ -282,43 +283,39 @@ export default function ProjectClient({ initialProjects }: { initialProjects: an
                 <div>
                   <label className="label">Status Project</label>
                   <select className="input" value={formData.status} onChange={(e) => setFormData({...formData, status: e.target.value})} required>
-                    <option value="Baru">Baru</option>
                     <option value="Progress">Progress</option>
                     <option value="Selesai">Selesai</option>
                     <option value="Belum Selesai">Belum Selesai</option>
                   </select>
                 </div>
                 <div>
-                  <label className="label">Status Pembayaran</label>
+                  <label className="label">Pembayaran</label>
                   <select className="input" value={formData.paymentStatus} onChange={(e) => setFormData({...formData, paymentStatus: e.target.value})} required>
-                    <option value="Belum Lunas">Belum Lunas</option>
-                    <option value="DP">DP</option>
-                    <option value="Lunas">Lunas</option>
+                    <option value="Belum Bayar">Belum Bayar</option>
+                    <option value="Bank">Bank</option>
+                    <option value="E Wallet">E Wallet</option>
                   </select>
                 </div>
               </div>
 
-              <div className="grid grid-cols-2">
+              <div className="grid grid-cols-1">
                 <div>
                   <label className="label">Harga Project (Rp)</label>
-                  <div style={{ position: "relative" }}>
-                    <span style={{ position: "absolute", left: "1rem", top: "50%", transform: "translateY(-50%)", color: "var(--text-muted)", fontWeight: "600" }}>Rp</span>
-                    <input type="number" className="input" style={{ paddingLeft: "2.5rem" }} value={formData.price} onChange={(e) => setFormData({...formData, price: e.target.value})} required placeholder="0" />
-                  </div>
-                </div>
-                <div>
-                  <label className="label">File URL (Invoice/Dokumen)</label>
-                  <input type="text" className="input" placeholder="https://drive.google.com/..." value={formData.fileUrl} onChange={(e) => setFormData({...formData, fileUrl: e.target.value})} />
+                  <select className="input" value={formData.price} onChange={(e) => setFormData({...formData, price: e.target.value})} required>
+                    {priceOptions.map(p => (
+                      <option key={p} value={p}>{formatRp(p)}</option>
+                    ))}
+                  </select>
                 </div>
               </div>
 
               <div>
-                <label className="label">Link URL (Aplikasi/Web Hasil)</label>
+                <label className="label">Link URL <span style={{ color: "var(--text-muted)", fontSize: "0.75rem", fontWeight: "normal" }}>(Opsional)</span></label>
                 <input type="text" className="input" placeholder="https://domain-project.com" value={formData.linkUrl} onChange={(e) => setFormData({...formData, linkUrl: e.target.value})} />
               </div>
 
               <div>
-                <label className="label">Catatan Tambahan</label>
+                <label className="label">Catatan Tambahan <span style={{ color: "var(--text-muted)", fontSize: "0.75rem", fontWeight: "normal" }}>(Opsional)</span></label>
                 <textarea className="input" rows={3} placeholder="Catatan khusus untuk project ini..." value={formData.notes} onChange={(e) => setFormData({...formData, notes: e.target.value})}></textarea>
               </div>
 

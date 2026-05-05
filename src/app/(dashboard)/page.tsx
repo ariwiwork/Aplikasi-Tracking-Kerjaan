@@ -1,12 +1,14 @@
 import { prisma } from "@/lib/prisma";
-import { Briefcase, CheckCircle, Clock, XCircle, Users, UserX, TrendingUp, TrendingDown, BarChart2 } from "lucide-react";
+import { Briefcase, CheckCircle, Clock, XCircle, Users, UserX, TrendingUp, TrendingDown, BarChart2, Wallet } from "lucide-react";
 import DashboardChart from "@/components/DashboardChart";
 
 export const dynamic = "force-dynamic";
 
 export default async function DashboardPage() {
+  const currentMonthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+
   const [
-    totalBaru,
+    totalKerjaanBulanIni,
     totalProgress,
     totalSelesai,
     totalBelumSelesai,
@@ -16,16 +18,20 @@ export default async function DashboardPage() {
     totalPengeluaran,
     projectsLunas
   ] = await Promise.all([
-    prisma.project.count({ where: { status: "Baru" } }),
+    prisma.project.count({ where: { startDate: { gte: currentMonthStart } } }),
     prisma.project.count({ where: { status: "Progress" } }),
     prisma.project.count({ where: { status: "Selesai" } }),
     prisma.project.count({ where: { status: "Belum Selesai" } }),
     prisma.client.count({ where: { isActive: true } }),
     prisma.client.count({ where: { isActive: false } }),
-    prisma.project.aggregate({ _sum: { price: true }, where: { paymentStatus: "Lunas" } }),
+    prisma.project.aggregate({ _sum: { price: true }, where: { paymentStatus: { in: ["Bank", "E Wallet"] } } }),
     prisma.expense.aggregate({ _sum: { amount: true } }),
-    prisma.project.findMany({ where: { paymentStatus: "Lunas" }, select: { startDate: true, price: true } })
+    prisma.project.findMany({ where: { paymentStatus: { in: ["Bank", "E Wallet"] } }, select: { startDate: true, price: true } })
   ]);
+
+  const pemasukan = totalPemasukan._sum.price || 0;
+  const pengeluaran = totalPengeluaran._sum.amount || 0;
+  const saldo = pemasukan - pengeluaran;
 
   // Group data by month for the chart
   const months = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agt", "Sep", "Okt", "Nov", "Des"];
@@ -43,7 +49,7 @@ export default async function DashboardPage() {
   }));
 
   const stats = [
-    { label: "Kerjaan Baru", value: totalBaru, icon: <Briefcase size={24} className="text-blue-500" />, color: "var(--info)" },
+    { label: "Total Kerjaan (Bulan Ini)", value: totalKerjaanBulanIni, icon: <Briefcase size={24} className="text-blue-500" />, color: "var(--info)" },
     { label: "Kerjaan Progress", value: totalProgress, icon: <Clock size={24} className="text-yellow-500" />, color: "var(--warning)" },
     { label: "Kerjaan Selesai", value: totalSelesai, icon: <CheckCircle size={24} className="text-green-500" />, color: "var(--success)" },
     { label: "Belum Selesai", value: totalBelumSelesai, icon: <XCircle size={24} className="text-red-500" />, color: "var(--danger)" },
@@ -54,14 +60,15 @@ export default async function DashboardPage() {
     { label: "Client Tidak Aktif", value: inactiveClients, icon: <UserX size={24} />, color: "var(--text-muted)" },
   ];
 
-  const financeStats = [
-    { label: "Total Pemasukan", value: totalPemasukan._sum.price || 0, icon: <TrendingUp size={24} />, color: "var(--success)", format: true },
-    { label: "Total Pengeluaran", value: totalPengeluaran._sum.amount || 0, icon: <TrendingDown size={24} />, color: "var(--danger)", format: true },
-  ];
-
   const formatRp = (num: number) => {
     return new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR" }).format(num);
   };
+
+  const financeStats = [
+    { label: "Total Pemasukan", value: pemasukan, icon: <TrendingUp size={24} />, color: "var(--success)", format: true },
+    { label: "Total Pengeluaran", value: pengeluaran, icon: <TrendingDown size={24} />, color: "var(--danger)", format: true },
+    { label: "Total Uang (Saldo)", value: saldo, icon: <Wallet size={24} />, color: saldo >= 0 ? "var(--primary)" : "var(--danger)", format: true },
+  ];
 
   return (
     <div className="animate-fade-in">
@@ -106,15 +113,15 @@ export default async function DashboardPage() {
 
         <div>
           <h2 style={{ fontSize: "1.25rem", fontWeight: "600", marginBottom: "1rem" }}>Statistik Keuangan</h2>
-          <div className="grid grid-cols-2">
+          <div className="grid grid-cols-3">
             {financeStats.map((s, i) => (
-              <div key={i} className="card" style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
-                <div style={{ padding: "1rem", borderRadius: "50%", backgroundColor: `${s.color}20`, color: s.color }}>
+              <div key={i} className="card" style={{ display: "flex", flexDirection: "column", gap: "0.5rem", padding: "1.25rem 1rem" }}>
+                <div style={{ padding: "0.75rem", borderRadius: "50%", backgroundColor: `${s.color}20`, color: s.color, width: "max-content" }}>
                   {s.icon}
                 </div>
                 <div>
-                  <p style={{ color: "var(--text-muted)", fontSize: "0.875rem", fontWeight: "500" }}>{s.label}</p>
-                  <h3 style={{ fontSize: "1.25rem", fontWeight: "700" }}>{s.format ? formatRp(s.value as number) : s.value}</h3>
+                  <p style={{ color: "var(--text-muted)", fontSize: "0.75rem", fontWeight: "600", textTransform: "uppercase" }}>{s.label}</p>
+                  <h3 style={{ fontSize: "1.1rem", fontWeight: "800", color: s.color }}>{s.format ? formatRp(s.value as number) : s.value}</h3>
                 </div>
               </div>
             ))}

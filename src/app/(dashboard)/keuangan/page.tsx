@@ -5,7 +5,7 @@ export const dynamic = "force-dynamic";
 
 export default async function KeuanganPage() {
   const projects = await prisma.project.findMany({
-    where: { paymentStatus: "Lunas" },
+    where: { paymentStatus: { in: ["Bank", "E Wallet"] } },
     orderBy: { createdAt: 'desc' }
   });
 
