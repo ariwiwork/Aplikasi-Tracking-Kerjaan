@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
-import { Briefcase, CheckCircle, Clock, XCircle, Users, UserX, TrendingUp, TrendingDown } from "lucide-react";
+import { Briefcase, CheckCircle, Clock, XCircle, Users, UserX, TrendingUp, TrendingDown, BarChart2 } from "lucide-react";
+import DashboardChart from "@/components/DashboardChart";
 
 export const dynamic = "force-dynamic";
 
@@ -12,7 +13,8 @@ export default async function DashboardPage() {
     activeClients,
     inactiveClients,
     totalPemasukan,
-    totalPengeluaran
+    totalPengeluaran,
+    projectsLunas
   ] = await Promise.all([
     prisma.project.count({ where: { status: "Baru" } }),
     prisma.project.count({ where: { status: "Progress" } }),
@@ -21,8 +23,24 @@ export default async function DashboardPage() {
     prisma.client.count({ where: { isActive: true } }),
     prisma.client.count({ where: { isActive: false } }),
     prisma.project.aggregate({ _sum: { price: true }, where: { paymentStatus: "Lunas" } }),
-    prisma.expense.aggregate({ _sum: { amount: true } })
+    prisma.expense.aggregate({ _sum: { amount: true } }),
+    prisma.project.findMany({ where: { paymentStatus: "Lunas" }, select: { startDate: true, price: true } })
   ]);
+
+  // Group data by month for the chart
+  const months = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agt", "Sep", "Okt", "Nov", "Des"];
+  const chartDataMap = new Map();
+  
+  projectsLunas.forEach(p => {
+    const d = new Date(p.startDate);
+    const m = months[d.getMonth()];
+    chartDataMap.set(m, (chartDataMap.get(m) || 0) + p.price);
+  });
+
+  const chartData = months.map(m => ({
+    name: m,
+    pendapatan: chartDataMap.get(m) || 0
+  }));
 
   const stats = [
     { label: "Kerjaan Baru", value: totalBaru, icon: <Briefcase size={24} className="text-blue-500" />, color: "var(--info)" },
@@ -102,6 +120,14 @@ export default async function DashboardPage() {
             ))}
           </div>
         </div>
+      </div>
+
+      <div className="card" style={{ marginBottom: "2rem" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "1.5rem" }}>
+          <BarChart2 size={20} color="var(--primary)" />
+          <h2 style={{ fontSize: "1.25rem", fontWeight: "600" }}>Performa Pendapatan per Bulan</h2>
+        </div>
+        <DashboardChart data={chartData} />
       </div>
     </div>
   );

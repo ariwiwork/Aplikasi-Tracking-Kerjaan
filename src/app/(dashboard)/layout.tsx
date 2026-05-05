@@ -2,10 +2,9 @@
 
 import { useSession, signOut } from "next-auth/react";
 import { useRouter, usePathname } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import { LayoutDashboard, Briefcase, Wallet, LogOut, Menu, X } from "lucide-react";
-import { useState } from "react";
+import { LayoutDashboard, Briefcase, Wallet, LogOut, Menu, X, User } from "lucide-react";
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const { data: session, status } = useSession();
@@ -22,7 +21,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   if (status === "loading" || status === "unauthenticated") {
     return (
       <div style={{ display: "flex", height: "100vh", alignItems: "center", justifyContent: "center" }}>
-        Loading...
+        <div style={{ width: "40px", height: "40px", borderRadius: "50%", border: "3px solid var(--border-color)", borderTopColor: "var(--primary)", animation: "spin 1s linear infinite" }}></div>
+        <style>{`@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`}</style>
       </div>
     );
   }
@@ -36,30 +36,27 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   return (
     <div className="layout">
       {/* Mobile Header */}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "1rem", borderBottom: "1px solid var(--border-color)", backgroundColor: "var(--bg-card)" }} className="md:hidden">
-        <div style={{ fontWeight: "bold", fontSize: "1.25rem", color: "var(--primary)" }}>Tracking Rekap</div>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "1rem", borderBottom: "1px solid var(--border-color)", backgroundColor: "var(--bg-card)" }} className="md-hidden">
+        <div style={{ fontWeight: "800", fontSize: "1.25rem", color: "var(--primary)", letterSpacing: "-0.02em" }}>Tracking Rekap</div>
         <button onClick={() => setMobileOpen(!mobileOpen)} className="btn btn-outline" style={{ padding: "0.5rem" }}>
           {mobileOpen ? <X size={20} /> : <Menu size={20} />}
         </button>
       </div>
 
       {/* Sidebar */}
-      <aside className={`sidebar ${mobileOpen ? 'block' : 'hidden md:flex'}`} style={{ 
-        position: mobileOpen ? "fixed" : "relative", 
-        zIndex: 40, 
-        height: "100vh",
-        display: mobileOpen ? "flex" : undefined
-      }}>
-        <div style={{ padding: "2rem 1.5rem", borderBottom: "1px solid var(--border-color)" }}>
-          <h2 style={{ fontSize: "1.5rem", fontWeight: "800", color: "var(--primary)", letterSpacing: "-0.05em" }}>
-            Tracking Rekap
-          </h2>
-          <p style={{ fontSize: "0.75rem", color: "var(--text-muted)", marginTop: "0.25rem" }}>
-            Welcome, {session?.user?.name || "Admin"}
-          </p>
+      <aside className={`sidebar ${mobileOpen ? 'mobile-open' : ''}`}>
+        <div style={{ padding: "2rem 1.5rem 1rem" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+            <div style={{ backgroundColor: "var(--primary)", color: "white", padding: "0.5rem", borderRadius: "var(--radius)" }}>
+              <Briefcase size={24} />
+            </div>
+            <h2 style={{ fontSize: "1.35rem", fontWeight: "800", color: "var(--text-main)", letterSpacing: "-0.03em" }}>
+              Tracking<span style={{ color: "var(--primary)" }}>Rekap</span>
+            </h2>
+          </div>
         </div>
         
-        <nav style={{ flex: 1, padding: "1.5rem 0", display: "flex", flexDirection: "column", gap: "0.25rem" }}>
+        <nav style={{ flex: 1, padding: "1.5rem 1rem", display: "flex", flexDirection: "column", gap: "0.5rem" }}>
           {menuItems.map((item) => {
             const isActive = pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href));
             return (
@@ -71,11 +68,23 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           })}
         </nav>
 
-        <div style={{ padding: "1.5rem" }}>
+        <div style={{ padding: "1rem", borderTop: "1px solid var(--border-color)", marginTop: "auto" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", padding: "0.75rem", marginBottom: "0.5rem", borderRadius: "var(--radius)", backgroundColor: "var(--bg-color)" }}>
+            <div style={{ backgroundColor: "var(--primary)", color: "white", borderRadius: "50%", padding: "0.4rem" }}>
+              <User size={18} />
+            </div>
+            <div style={{ flex: 1, overflow: "hidden" }}>
+              <p style={{ fontSize: "0.875rem", fontWeight: "600", color: "var(--text-main)", whiteSpace: "nowrap", textOverflow: "ellipsis" }}>
+                {session?.user?.name || "Admin"}
+              </p>
+              <p style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>Administrator</p>
+            </div>
+          </div>
+          
           <button 
             onClick={() => signOut()} 
-            className="btn btn-outline" 
-            style={{ width: "100%", justifyContent: "flex-start", color: "var(--danger)", borderColor: "transparent" }}
+            className="nav-item" 
+            style={{ width: "100%", justifyContent: "flex-start", color: "var(--danger)" }}
           >
             <LogOut size={20} />
             <span>Logout</span>
@@ -85,7 +94,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
       {/* Main Content */}
       <main className="main-content">
-        {children}
+        <div style={{ maxWidth: "1200px", margin: "0 auto" }}>
+          {children}
+        </div>
       </main>
     </div>
   );
