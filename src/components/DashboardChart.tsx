@@ -19,7 +19,7 @@ export default function DashboardChart({ data }: { data: any[] }) {
   };
 
   return (
-    <div style={{ width: "100%", height: 350 }}>
+    <div style={{ width: "100%", height: "100%", minHeight: "200px" }}>
       <ResponsiveContainer width="100%" height="100%">
         <BarChart
           data={data}

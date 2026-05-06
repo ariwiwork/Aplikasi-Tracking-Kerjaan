@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { Briefcase, CheckCircle, Clock, XCircle, Users, UserX, TrendingUp, TrendingDown, BarChart2, Wallet } from "lucide-react";
+import { Briefcase, CheckCircle, Clock, XCircle, Users, UserX, TrendingUp, TrendingDown, BarChart2, Wallet, Activity } from "lucide-react";
 import DashboardChart from "@/components/DashboardChart";
 
 export const dynamic = "force-dynamic";
@@ -71,70 +71,53 @@ export default async function DashboardPage() {
   ];
 
   return (
-    <div className="animate-fade-in">
-      <div className="page-header">
+    <div className="animate-fade-in" style={{ height: "calc(100vh - 4rem)", overflow: "hidden", display: "flex", flexDirection: "column" }}>
+      <div className="page-header" style={{ marginBottom: "1rem" }}>
         <h1 className="page-title">Dashboard</h1>
       </div>
 
-      <div style={{ marginBottom: "2rem" }}>
-        <h2 style={{ fontSize: "1.25rem", fontWeight: "600", marginBottom: "1rem" }}>Statistik Kerjaan</h2>
-        <div className="grid grid-cols-4">
-          {stats.map((s, i) => (
-            <div key={i} className="card" style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
-              <div style={{ padding: "1rem", borderRadius: "50%", backgroundColor: `${s.color}20`, color: s.color }}>
-                {s.icon}
-              </div>
-              <div>
-                <p style={{ color: "var(--text-muted)", fontSize: "0.875rem", fontWeight: "500" }}>{s.label}</p>
-                <h3 style={{ fontSize: "1.5rem", fontWeight: "700" }}>{s.value}</h3>
-              </div>
-            </div>
-          ))}
+      <div className="grid grid-cols-4" style={{ marginBottom: "1rem", gap: "1rem" }}>
+        <div className="card" style={{ borderTop: "4px solid var(--info)", padding: "1rem" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.25rem", color: "var(--text-muted)" }}>
+            <Briefcase size={16} />
+            <p style={{ fontSize: "0.75rem", fontWeight: "600", textTransform: "uppercase", letterSpacing: "0.05em" }}>Total Kerjaan (Bulan Ini)</p>
+          </div>
+          <h3 style={{ fontSize: "1.5rem", fontWeight: "800", color: "var(--text-main)" }}>{totalKerjaanBulanIni}</h3>
+        </div>
+
+        <div className="card" style={{ borderTop: "4px solid var(--success)", padding: "1rem" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.25rem", color: "var(--text-muted)" }}>
+            <Wallet size={16} />
+            <p style={{ fontSize: "0.75rem", fontWeight: "600", textTransform: "uppercase", letterSpacing: "0.05em" }}>Pemasukan</p>
+          </div>
+          <h3 style={{ fontSize: "1.5rem", fontWeight: "800", color: "var(--success)" }}>{formatRp(pemasukan)}</h3>
+        </div>
+
+        <div className="card" style={{ borderTop: "4px solid var(--danger)", padding: "1rem" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.25rem", color: "var(--text-muted)" }}>
+            <TrendingDown size={16} />
+            <p style={{ fontSize: "0.75rem", fontWeight: "600", textTransform: "uppercase", letterSpacing: "0.05em" }}>Pengeluaran</p>
+          </div>
+          <h3 style={{ fontSize: "1.5rem", fontWeight: "800", color: "var(--danger)" }}>{formatRp(pengeluaran)}</h3>
+        </div>
+
+        <div className="card" style={{ borderTop: `4px solid ${saldo >= 0 ? 'var(--primary)' : 'var(--danger)'}`, padding: "1rem" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.25rem", color: "var(--text-muted)" }}>
+            <Activity size={16} />
+            <p style={{ fontSize: "0.75rem", fontWeight: "600", textTransform: "uppercase", letterSpacing: "0.05em" }}>Total Uang (Saldo)</p>
+          </div>
+          <h3 style={{ fontSize: "1.5rem", fontWeight: "800", color: saldo >= 0 ? "var(--primary)" : "var(--danger)" }}>{formatRp(saldo)}</h3>
         </div>
       </div>
 
-      <div className="grid grid-cols-2" style={{ gap: "1.5rem", marginBottom: "2rem" }}>
-        <div>
-          <h2 style={{ fontSize: "1.25rem", fontWeight: "600", marginBottom: "1rem" }}>Statistik Client</h2>
-          <div className="grid grid-cols-2">
-            {clientStats.map((s, i) => (
-              <div key={i} className="card" style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
-                <div style={{ padding: "1rem", borderRadius: "50%", backgroundColor: `${s.color}20`, color: s.color }}>
-                  {s.icon}
-                </div>
-                <div>
-                  <p style={{ color: "var(--text-muted)", fontSize: "0.875rem", fontWeight: "500" }}>{s.label}</p>
-                  <h3 style={{ fontSize: "1.5rem", fontWeight: "700" }}>{s.value}</h3>
-                </div>
-              </div>
-            ))}
-          </div>
+      <div className="card" style={{ marginBottom: "1rem", flex: 1, display: "flex", flexDirection: "column", padding: "1rem" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.5rem" }}>
+          <BarChart2 size={16} color="var(--primary)" />
+          <h2 style={{ fontSize: "1.1rem", fontWeight: "600" }}>Performa Kerjaan Bulan Ini</h2>
         </div>
-
-        <div>
-          <h2 style={{ fontSize: "1.25rem", fontWeight: "600", marginBottom: "1rem" }}>Statistik Keuangan</h2>
-          <div className="grid grid-cols-3">
-            {financeStats.map((s, i) => (
-              <div key={i} className="card" style={{ display: "flex", flexDirection: "column", gap: "0.5rem", padding: "1.25rem 1rem" }}>
-                <div style={{ padding: "0.75rem", borderRadius: "50%", backgroundColor: `${s.color}20`, color: s.color, width: "max-content" }}>
-                  {s.icon}
-                </div>
-                <div>
-                  <p style={{ color: "var(--text-muted)", fontSize: "0.75rem", fontWeight: "600", textTransform: "uppercase" }}>{s.label}</p>
-                  <h3 style={{ fontSize: "1.1rem", fontWeight: "800", color: s.color }}>{s.format ? formatRp(s.value as number) : s.value}</h3>
-                </div>
-              </div>
-            ))}
-          </div>
+        <div style={{ flex: 1, minHeight: 0 }}>
+          <DashboardChart data={chartData} />
         </div>
-      </div>
-
-      <div className="card" style={{ marginBottom: "2rem" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "1.5rem" }}>
-          <BarChart2 size={20} color="var(--primary)" />
-          <h2 style={{ fontSize: "1.25rem", fontWeight: "600" }}>Performa Kerjaan Bulan Ini</h2>
-        </div>
-        <DashboardChart data={chartData} />
       </div>
     </div>
   );

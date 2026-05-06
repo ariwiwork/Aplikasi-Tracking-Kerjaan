@@ -123,15 +123,19 @@ export default function ProjectClient({ initialProjects, clients }: { initialPro
       p.client?.name || "-",
       p.duration,
       new Date(p.startDate).toLocaleDateString("id-ID"),
+      p.endDate ? new Date(p.endDate).toLocaleDateString("id-ID") : "-",
       p.status,
       p.price.toLocaleString("id-ID", { style: "currency", currency: "IDR" }),
-      p.paymentStatus
+      p.paymentStatus,
+      p.linkUrl || "-",
+      p.notes || "-"
     ]);
 
     autoTable(doc, {
-      head: [["No", "Nama Project", "Client", "Durasi", "Tgl Mulai", "Status", "Harga", "Pembayaran"]],
+      head: [["No", "Project", "Client", "Durasi", "Mulai", "Selesai", "Status", "Harga", "Bayar", "Link", "Catatan"]],
       body: tableData,
       startY: 20,
+      styles: { fontSize: 8 },
     });
 
     doc.save(`Laporan_Kerjaan_Bulan_${activeTabMonth}.pdf`);
@@ -150,7 +154,6 @@ export default function ProjectClient({ initialProjects, clients }: { initialPro
     }
   };
 
-  // Generate options
   const durationOptions = Array.from({ length: 120 }, (_, i) => `${i + 1} Menit`);
   const priceOptions = [];
   for (let p = 5000; p <= 1000000; p += 5000) {
@@ -159,9 +162,100 @@ export default function ProjectClient({ initialProjects, clients }: { initialPro
 
   const months = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
 
+  if (isModalOpen) {
+    return (
+      <div className="card animate-fade-in" style={{ marginBottom: "1rem" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem", paddingBottom: "1rem", borderBottom: "1px solid var(--border-color)" }}>
+          <h2 style={{ fontSize: "1.25rem", fontWeight: "700" }}>{editingId ? "Edit Project" : "Tambah Project Baru"}</h2>
+          <button onClick={() => setIsModalOpen(false)} className="btn btn-outline" style={{ padding: "0.4rem", borderColor: "transparent", borderRadius: "50%", backgroundColor: "var(--bg-color)" }}>
+            <X size={20} />
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}>
+          <div className="grid grid-cols-2">
+            <div>
+              <label className="label">Nama Project</label>
+              <input type="text" className="input" value={formData.projectName} onChange={(e) => setFormData({...formData, projectName: e.target.value})} required placeholder="Contoh: Desain Banner" />
+            </div>
+            <div>
+              <label className="label">Client</label>
+              <select className="input" value={formData.clientId} onChange={(e) => setFormData({...formData, clientId: e.target.value})} required>
+                <option value="" disabled>Pilih Client</option>
+                {clients.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+              </select>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2">
+            <div>
+              <label className="label">Durasi (Menit)</label>
+              <select className="input" value={formData.duration} onChange={(e) => setFormData({...formData, duration: e.target.value})} required>
+                {durationOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="label">Status Project</label>
+              <select className="input" value={formData.status} onChange={(e) => setFormData({...formData, status: e.target.value})} required>
+                <option value="Progress">Progress</option>
+                <option value="Selesai">Selesai</option>
+                <option value="Belum Selesai">Belum Selesai</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2">
+            <div>
+              <label className="label">Tanggal Mulai</label>
+              <input type="date" className="input" value={formData.startDate} onChange={(e) => setFormData({...formData, startDate: e.target.value})} required />
+            </div>
+            <div>
+              <label className="label">Tanggal Selesai</label>
+              <input type="date" className="input" value={formData.endDate} onChange={(e) => setFormData({...formData, endDate: e.target.value})} />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2">
+            <div>
+              <label className="label">Pembayaran</label>
+              <select className="input" value={formData.paymentStatus} onChange={(e) => setFormData({...formData, paymentStatus: e.target.value})} required>
+                <option value="Belum Bayar">Belum Bayar</option>
+                <option value="Bank">Bank</option>
+                <option value="E Wallet">E Wallet</option>
+              </select>
+            </div>
+            <div>
+              <label className="label">Harga Project (Rp)</label>
+              <select className="input" value={formData.price} onChange={(e) => setFormData({...formData, price: e.target.value})} required>
+                {priceOptions.map(p => (
+                  <option key={p} value={p}>{formatRp(p)}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label className="label">Link URL <span style={{ color: "var(--text-muted)", fontSize: "0.75rem", fontWeight: "normal" }}>(Opsional)</span></label>
+            <input type="text" className="input" placeholder="https://domain-project.com" value={formData.linkUrl} onChange={(e) => setFormData({...formData, linkUrl: e.target.value})} />
+          </div>
+
+          <div>
+            <label className="label">Catatan Tambahan <span style={{ color: "var(--text-muted)", fontSize: "0.75rem", fontWeight: "normal" }}>(Opsional)</span></label>
+            <textarea className="input" rows={3} placeholder="Catatan khusus untuk project ini..." value={formData.notes} onChange={(e) => setFormData({...formData, notes: e.target.value})}></textarea>
+          </div>
+
+          <div style={{ display: "flex", justifyContent: "flex-end", gap: "1rem", marginTop: "1rem", paddingTop: "1rem", borderTop: "1px solid var(--border-color)" }}>
+            <button type="button" onClick={() => setIsModalOpen(false)} className="btn btn-outline" style={{ minWidth: "100px" }}>Batal</button>
+            <button type="submit" className="btn btn-primary" style={{ minWidth: "120px" }}>{editingId ? "Simpan Perubahan" : "Simpan Project"}</button>
+          </div>
+        </form>
+      </div>
+    );
+  }
+
   return (
-    <div className="card">
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem", flexWrap: "wrap", gap: "1rem" }}>
+    <div className="card" style={{ marginBottom: "1rem" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem", flexWrap: "wrap", gap: "1rem" }}>
         <h2 style={{ fontSize: "1.25rem", fontWeight: "600" }}>Data Kerjaan</h2>
         <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap" }}>
           <button onClick={exportPDF} className="btn btn-outline" style={{ color: "var(--danger)", borderColor: "var(--danger)" }}>
@@ -174,7 +268,7 @@ export default function ProjectClient({ initialProjects, clients }: { initialPro
       </div>
 
       {/* Tabs Bulan */}
-      <div style={{ display: "flex", overflowX: "auto", gap: "0.5rem", paddingBottom: "0.5rem", marginBottom: "1.5rem", borderBottom: "1px solid var(--border-color)" }}>
+      <div style={{ display: "flex", overflowX: "auto", gap: "0.5rem", paddingBottom: "0.5rem", marginBottom: "1rem", borderBottom: "1px solid var(--border-color)" }}>
         {months.map((m, i) => (
           <button 
             key={i} 
@@ -192,13 +286,13 @@ export default function ProjectClient({ initialProjects, clients }: { initialPro
         ))}
       </div>
 
-      <div style={{ display: "flex", gap: "1rem", marginBottom: "1.5rem", flexWrap: "wrap", alignItems: "center", backgroundColor: "var(--bg-color)", padding: "1rem", borderRadius: "var(--radius)", border: "1px solid var(--border-color)" }}>
-        <div style={{ position: "relative", flex: "1 1 250px" }}>
-          <Search size={18} style={{ position: "absolute", left: "1rem", top: "50%", transform: "translateY(-50%)", color: "var(--text-muted)" }} />
+      <div style={{ display: "flex", gap: "0.75rem", marginBottom: "1rem", flexWrap: "wrap", alignItems: "center", backgroundColor: "var(--bg-color)", padding: "0.75rem", borderRadius: "var(--radius)", border: "1px solid var(--border-color)" }}>
+        <div style={{ position: "relative", flex: "1 1 200px" }}>
+          <Search size={16} style={{ position: "absolute", left: "1rem", top: "50%", transform: "translateY(-50%)", color: "var(--text-muted)" }} />
           <input 
             type="text" 
             className="input" 
-            style={{ paddingLeft: "2.5rem" }}
+            style={{ paddingLeft: "2.25rem", paddingRight: "0.5rem" }}
             placeholder="Cari nama project..." 
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
@@ -206,7 +300,7 @@ export default function ProjectClient({ initialProjects, clients }: { initialPro
         </div>
         
         <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-          <Filter size={18} style={{ color: "var(--text-muted)" }} />
+          <Filter size={16} style={{ color: "var(--text-muted)" }} />
           <select className="input" style={{ width: "auto" }} value={filterClient} onChange={(e) => setFilterClient(e.target.value)}>
             <option value="Semua">Semua Client</option>
             {clients.map(c => <option key={c.id} value={c.id.toString()}>{c.name}</option>)}
@@ -240,7 +334,7 @@ export default function ProjectClient({ initialProjects, clients }: { initialPro
           <tbody>
             {paginatedProjects.length === 0 ? (
               <tr>
-                <td colSpan={11} style={{ textAlign: "center", color: "var(--text-muted)", padding: "3rem 0" }}>Tidak ada data kerjaan di bulan ini.</td>
+                <td colSpan={11} style={{ textAlign: "center", color: "var(--text-muted)", padding: "2rem 0" }}>Tidak ada data kerjaan di bulan ini.</td>
               </tr>
             ) : (
               paginatedProjects.map((p, i) => (
@@ -266,11 +360,11 @@ export default function ProjectClient({ initialProjects, clients }: { initialPro
                   </td>
                   <td>
                     <div style={{ display: "flex", gap: "0.5rem", justifyContent: "flex-end" }}>
-                      <button onClick={() => handleOpenModal(p)} className="btn btn-outline" style={{ padding: "0.4rem", color: "var(--info)", borderColor: "transparent", backgroundColor: "rgba(59, 130, 246, 0.1)", borderRadius: "8px" }}>
-                        <Pencil size={16} />
+                      <button onClick={() => handleOpenModal(p)} className="btn btn-outline" style={{ padding: "0.4rem", color: "var(--info)", borderColor: "transparent", backgroundColor: "rgba(59, 130, 246, 0.1)", borderRadius: "6px" }}>
+                        <Pencil size={14} />
                       </button>
-                      <button onClick={() => handleDelete(p.id)} className="btn btn-outline" style={{ padding: "0.4rem", color: "var(--danger)", borderColor: "transparent", backgroundColor: "rgba(239, 68, 68, 0.1)", borderRadius: "8px" }}>
-                        <Trash2 size={16} />
+                      <button onClick={() => handleDelete(p.id)} className="btn btn-outline" style={{ padding: "0.4rem", color: "var(--danger)", borderColor: "transparent", backgroundColor: "rgba(239, 68, 68, 0.1)", borderRadius: "6px" }}>
+                        <Trash2 size={14} />
                       </button>
                     </div>
                   </td>
@@ -284,121 +378,29 @@ export default function ProjectClient({ initialProjects, clients }: { initialPro
       {/* Pagination UI */}
       {totalPages > 1 && (
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "1rem", paddingTop: "1rem", borderTop: "1px solid var(--border-color)" }}>
-          <div style={{ fontSize: "0.875rem", color: "var(--text-muted)" }}>
-            Menampilkan {(currentPage - 1) * rowsPerPage + 1} hingga {Math.min(currentPage * rowsPerPage, filteredProjects.length)} dari {filteredProjects.length} data
+          <div style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>
+            Menampilkan {(currentPage - 1) * rowsPerPage + 1} - {Math.min(currentPage * rowsPerPage, filteredProjects.length)} dari {filteredProjects.length}
           </div>
           <div style={{ display: "flex", gap: "0.5rem" }}>
             <button 
               onClick={() => setCurrentPage(p => Math.max(1, p - 1))} 
               disabled={currentPage === 1}
               className="btn btn-outline" 
-              style={{ padding: "0.4rem 0.8rem", opacity: currentPage === 1 ? 0.5 : 1 }}
+              style={{ padding: "0.3rem 0.6rem", fontSize: "0.75rem", opacity: currentPage === 1 ? 0.5 : 1 }}
             >
-              Sebelumnya
+              Sebelumn
             </button>
-            <div style={{ display: "flex", alignItems: "center", padding: "0 0.5rem", fontWeight: "600" }}>
+            <div style={{ display: "flex", alignItems: "center", padding: "0 0.5rem", fontWeight: "600", fontSize: "0.75rem" }}>
               {currentPage} / {totalPages}
             </div>
             <button 
               onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} 
               disabled={currentPage === totalPages}
               className="btn btn-outline" 
-              style={{ padding: "0.4rem 0.8rem", opacity: currentPage === totalPages ? 0.5 : 1 }}
+              style={{ padding: "0.3rem 0.6rem", fontSize: "0.75rem", opacity: currentPage === totalPages ? 0.5 : 1 }}
             >
-              Selanjutnya
+              Lanjut
             </button>
-          </div>
-        </div>
-      )}
-
-      {/* Modal */}
-      {isModalOpen && (
-        <div style={{ position: "fixed", inset: 0, backgroundColor: "rgba(0,0,0,0.6)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 50, padding: "1rem", backdropFilter: "blur(4px)" }}>
-          <div className="card animate-fade-in" style={{ width: "100%", maxWidth: "650px", maxHeight: "90vh", overflowY: "auto", boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem", paddingBottom: "1rem", borderBottom: "1px solid var(--border-color)" }}>
-              <h2 style={{ fontSize: "1.25rem", fontWeight: "700" }}>{editingId ? "Edit Project" : "Tambah Project Baru"}</h2>
-              <button onClick={() => setIsModalOpen(false)} className="btn btn-outline" style={{ padding: "0.4rem", borderColor: "transparent", borderRadius: "50%", backgroundColor: "var(--bg-color)" }}>
-                <X size={20} />
-              </button>
-            </div>
-
-            <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}>
-              <div className="grid grid-cols-2">
-                <div>
-                  <label className="label">Nama Project</label>
-                  <input type="text" className="input" value={formData.projectName} onChange={(e) => setFormData({...formData, projectName: e.target.value})} required placeholder="Contoh: Desain Banner" />
-                </div>
-                <div>
-                  <label className="label">Client</label>
-                  <select className="input" value={formData.clientId} onChange={(e) => setFormData({...formData, clientId: e.target.value})} required>
-                    <option value="" disabled>Pilih Client</option>
-                    {clients.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                  </select>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2">
-                <div>
-                  <label className="label">Durasi (Menit)</label>
-                  <select className="input" value={formData.duration} onChange={(e) => setFormData({...formData, duration: e.target.value})} required>
-                    {durationOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
-                  </select>
-                </div>
-                <div>
-                  <label className="label">Status Project</label>
-                  <select className="input" value={formData.status} onChange={(e) => setFormData({...formData, status: e.target.value})} required>
-                    <option value="Progress">Progress</option>
-                    <option value="Selesai">Selesai</option>
-                    <option value="Belum Selesai">Belum Selesai</option>
-                  </select>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2">
-                <div>
-                  <label className="label">Tanggal Mulai</label>
-                  <input type="date" className="input" value={formData.startDate} onChange={(e) => setFormData({...formData, startDate: e.target.value})} required />
-                </div>
-                <div>
-                  <label className="label">Tanggal Selesai</label>
-                  <input type="date" className="input" value={formData.endDate} onChange={(e) => setFormData({...formData, endDate: e.target.value})} />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2">
-                <div>
-                  <label className="label">Pembayaran</label>
-                  <select className="input" value={formData.paymentStatus} onChange={(e) => setFormData({...formData, paymentStatus: e.target.value})} required>
-                    <option value="Belum Bayar">Belum Bayar</option>
-                    <option value="Bank">Bank</option>
-                    <option value="E Wallet">E Wallet</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="label">Harga Project (Rp)</label>
-                  <select className="input" value={formData.price} onChange={(e) => setFormData({...formData, price: e.target.value})} required>
-                    {priceOptions.map(p => (
-                      <option key={p} value={p}>{formatRp(p)}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              <div>
-                <label className="label">Link URL <span style={{ color: "var(--text-muted)", fontSize: "0.75rem", fontWeight: "normal" }}>(Opsional)</span></label>
-                <input type="text" className="input" placeholder="https://domain-project.com" value={formData.linkUrl} onChange={(e) => setFormData({...formData, linkUrl: e.target.value})} />
-              </div>
-
-              <div>
-                <label className="label">Catatan Tambahan <span style={{ color: "var(--text-muted)", fontSize: "0.75rem", fontWeight: "normal" }}>(Opsional)</span></label>
-                <textarea className="input" rows={3} placeholder="Catatan khusus untuk project ini..." value={formData.notes} onChange={(e) => setFormData({...formData, notes: e.target.value})}></textarea>
-              </div>
-
-              <div style={{ display: "flex", justifyContent: "flex-end", gap: "1rem", marginTop: "1rem", paddingTop: "1rem", borderTop: "1px solid var(--border-color)" }}>
-                <button type="button" onClick={() => setIsModalOpen(false)} className="btn btn-outline" style={{ minWidth: "100px" }}>Batal</button>
-                <button type="submit" className="btn btn-primary" style={{ minWidth: "120px" }}>{editingId ? "Simpan Perubahan" : "Simpan Project"}</button>
-              </div>
-            </form>
           </div>
         </div>
       )}

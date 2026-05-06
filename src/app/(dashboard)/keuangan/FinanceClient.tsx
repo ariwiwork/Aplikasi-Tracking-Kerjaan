@@ -118,25 +118,63 @@ export default function FinanceClient({ initialLedger }: { initialLedger: any[] 
   const totalExpense = filteredLedger.reduce((acc, curr) => acc + curr.expense, 0);
   const saldo = totalIncome - totalExpense;
 
+  if (isModalOpen) {
+    return (
+      <div className="card animate-fade-in" style={{ marginBottom: "1rem" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem", paddingBottom: "1rem", borderBottom: "1px solid var(--border-color)" }}>
+          <h2 style={{ fontSize: "1.25rem", fontWeight: "700" }}>Catat Pengeluaran Baru</h2>
+          <button onClick={() => setIsModalOpen(false)} className="btn btn-outline" style={{ padding: "0.4rem", borderColor: "transparent", borderRadius: "50%", backgroundColor: "var(--bg-color)" }}>
+            <X size={20} />
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}>
+          <div>
+            <label className="label">Keterangan / Deskripsi Pengeluaran</label>
+            <input type="text" className="input" placeholder="Contoh: Beli domain, langganan server..." value={formData.description} onChange={(e) => setFormData({...formData, description: e.target.value})} required />
+          </div>
+
+          <div>
+            <label className="label">Jumlah Pengeluaran (Rp)</label>
+            <div style={{ position: "relative" }}>
+              <span style={{ position: "absolute", left: "1rem", top: "50%", transform: "translateY(-50%)", color: "var(--text-muted)", fontWeight: "600" }}>Rp</span>
+              <input type="number" className="input" style={{ paddingLeft: "2.5rem" }} value={formData.amount} onChange={(e) => setFormData({...formData, amount: e.target.value})} required placeholder="0" />
+            </div>
+          </div>
+
+          <div>
+            <label className="label">Tanggal Pengeluaran</label>
+            <input type="date" className="input" value={formData.date} onChange={(e) => setFormData({...formData, date: e.target.value})} required />
+          </div>
+
+          <div style={{ display: "flex", justifyContent: "flex-end", gap: "1rem", marginTop: "1rem", paddingTop: "1rem", borderTop: "1px solid var(--border-color)" }}>
+            <button type="button" onClick={() => setIsModalOpen(false)} className="btn btn-outline" style={{ minWidth: "100px" }}>Batal</button>
+            <button type="submit" className="btn btn-primary" style={{ minWidth: "120px" }}>Simpan Data</button>
+          </div>
+        </form>
+      </div>
+    );
+  }
+
   return (
     <div>
-      <div className="grid grid-cols-3" style={{ marginBottom: "2rem" }}>
+      <div className="grid grid-cols-3" style={{ marginBottom: "1rem" }}>
         <div className="card" style={{ borderTop: "4px solid var(--success)" }}>
-          <p style={{ color: "var(--text-muted)", fontSize: "0.875rem", fontWeight: "600", textTransform: "uppercase", letterSpacing: "0.05em" }}>Total Pemasukan</p>
-          <h3 style={{ fontSize: "1.75rem", fontWeight: "800", color: "var(--success)", marginTop: "0.25rem" }}>{formatRp(totalIncome)}</h3>
+          <p style={{ color: "var(--text-muted)", fontSize: "0.75rem", fontWeight: "600", textTransform: "uppercase", letterSpacing: "0.05em" }}>Total Pemasukan</p>
+          <h3 style={{ fontSize: "1.5rem", fontWeight: "800", color: "var(--success)", marginTop: "0.25rem" }}>{formatRp(totalIncome)}</h3>
         </div>
         <div className="card" style={{ borderTop: "4px solid var(--danger)" }}>
-          <p style={{ color: "var(--text-muted)", fontSize: "0.875rem", fontWeight: "600", textTransform: "uppercase", letterSpacing: "0.05em" }}>Total Pengeluaran</p>
-          <h3 style={{ fontSize: "1.75rem", fontWeight: "800", color: "var(--danger)", marginTop: "0.25rem" }}>{formatRp(totalExpense)}</h3>
+          <p style={{ color: "var(--text-muted)", fontSize: "0.75rem", fontWeight: "600", textTransform: "uppercase", letterSpacing: "0.05em" }}>Total Pengeluaran</p>
+          <h3 style={{ fontSize: "1.5rem", fontWeight: "800", color: "var(--danger)", marginTop: "0.25rem" }}>{formatRp(totalExpense)}</h3>
         </div>
         <div className="card" style={{ borderTop: `4px solid ${saldo >= 0 ? 'var(--primary)' : 'var(--danger)'}` }}>
-          <p style={{ color: "var(--text-muted)", fontSize: "0.875rem", fontWeight: "600", textTransform: "uppercase", letterSpacing: "0.05em" }}>Saldo Saat Ini</p>
-          <h3 style={{ fontSize: "1.75rem", fontWeight: "800", color: saldo >= 0 ? "var(--primary)" : "var(--danger)", marginTop: "0.25rem" }}>{formatRp(saldo)}</h3>
+          <p style={{ color: "var(--text-muted)", fontSize: "0.75rem", fontWeight: "600", textTransform: "uppercase", letterSpacing: "0.05em" }}>Saldo Saat Ini</p>
+          <h3 style={{ fontSize: "1.5rem", fontWeight: "800", color: saldo >= 0 ? "var(--primary)" : "var(--danger)", marginTop: "0.25rem" }}>{formatRp(saldo)}</h3>
         </div>
       </div>
 
-      <div className="card">
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem", flexWrap: "wrap", gap: "1rem" }}>
+      <div className="card" style={{ marginBottom: "1rem" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem", flexWrap: "wrap", gap: "1rem" }}>
           <h2 style={{ fontSize: "1.25rem", fontWeight: "600" }}>Riwayat Keuangan</h2>
           <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap" }}>
             <button onClick={exportPDF} className="btn btn-outline" style={{ color: "var(--danger)", borderColor: "var(--danger)" }}>
@@ -148,13 +186,13 @@ export default function FinanceClient({ initialLedger }: { initialLedger: any[] 
           </div>
         </div>
 
-        <div style={{ display: "flex", gap: "1rem", marginBottom: "1.5rem", flexWrap: "wrap", alignItems: "center", backgroundColor: "var(--bg-color)", padding: "1rem", borderRadius: "var(--radius)", border: "1px solid var(--border-color)" }}>
-          <div style={{ position: "relative", flex: "1 1 250px" }}>
-            <Search size={18} style={{ position: "absolute", left: "1rem", top: "50%", transform: "translateY(-50%)", color: "var(--text-muted)" }} />
+        <div style={{ display: "flex", gap: "0.75rem", marginBottom: "1rem", flexWrap: "wrap", alignItems: "center", backgroundColor: "var(--bg-color)", padding: "0.75rem", borderRadius: "var(--radius)", border: "1px solid var(--border-color)" }}>
+          <div style={{ position: "relative", flex: "1 1 200px" }}>
+            <Search size={16} style={{ position: "absolute", left: "1rem", top: "50%", transform: "translateY(-50%)", color: "var(--text-muted)" }} />
             <input 
               type="text" 
               className="input" 
-              style={{ paddingLeft: "2.5rem" }}
+              style={{ paddingLeft: "2.25rem", paddingRight: "0.5rem" }}
               placeholder="Cari keterangan..." 
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
@@ -162,7 +200,7 @@ export default function FinanceClient({ initialLedger }: { initialLedger: any[] 
           </div>
           
           <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-            <Filter size={18} style={{ color: "var(--text-muted)" }} />
+            <Filter size={16} style={{ color: "var(--text-muted)" }} />
             <select className="input" style={{ width: "auto" }} value={filterType} onChange={(e) => setFilterType(e.target.value)}>
               <option value="Semua">Semua Tipe</option>
               <option value="income">Pemasukan</option>
@@ -172,7 +210,7 @@ export default function FinanceClient({ initialLedger }: { initialLedger: any[] 
 
           <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
             <select className="input" style={{ width: "auto" }} value={filterMonth} onChange={(e) => setFilterMonth(e.target.value)}>
-              <option value="Semua">Semua Bulan</option>
+              <option value="Semua">Bulan</option>
               <option value="1">Januari</option>
               <option value="2">Februari</option>
               <option value="3">Maret</option>
@@ -204,7 +242,7 @@ export default function FinanceClient({ initialLedger }: { initialLedger: any[] 
             <tbody>
               {filteredLedger.length === 0 ? (
                 <tr>
-                  <td colSpan={6} style={{ textAlign: "center", color: "var(--text-muted)", padding: "3rem 0" }}>Tidak ada riwayat keuangan yang sesuai filter</td>
+                  <td colSpan={6} style={{ textAlign: "center", color: "var(--text-muted)", padding: "2rem 0" }}>Tidak ada riwayat keuangan yang sesuai filter</td>
                 </tr>
               ) : (
                 paginatedLedger.map((l, i) => (
@@ -224,8 +262,8 @@ export default function FinanceClient({ initialLedger }: { initialLedger: any[] 
                     <td>
                       <div style={{ display: "flex", justifyContent: "flex-end" }}>
                         {l.type === "expense" ? (
-                          <button onClick={() => handleDelete(l.originalId)} className="btn btn-outline" style={{ padding: "0.4rem", color: "var(--danger)", borderColor: "transparent", backgroundColor: "rgba(239, 68, 68, 0.1)", borderRadius: "8px" }}>
-                            <Trash2 size={16} />
+                          <button onClick={() => handleDelete(l.originalId)} className="btn btn-outline" style={{ padding: "0.4rem", color: "var(--danger)", borderColor: "transparent", backgroundColor: "rgba(239, 68, 68, 0.1)", borderRadius: "6px" }}>
+                            <Trash2 size={14} />
                           </button>
                         ) : (
                           <span style={{ width: "32px", height: "32px" }}></span> /* Placeholder alignment */
@@ -242,72 +280,33 @@ export default function FinanceClient({ initialLedger }: { initialLedger: any[] 
         {/* Pagination UI */}
         {totalPages > 1 && (
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "1rem", paddingTop: "1rem", borderTop: "1px solid var(--border-color)" }}>
-            <div style={{ fontSize: "0.875rem", color: "var(--text-muted)" }}>
-              Menampilkan {(currentPage - 1) * rowsPerPage + 1} hingga {Math.min(currentPage * rowsPerPage, filteredLedger.length)} dari {filteredLedger.length} data
+            <div style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>
+              Menampilkan {(currentPage - 1) * rowsPerPage + 1} - {Math.min(currentPage * rowsPerPage, filteredLedger.length)} dari {filteredLedger.length}
             </div>
             <div style={{ display: "flex", gap: "0.5rem" }}>
               <button 
                 onClick={() => setCurrentPage(p => Math.max(1, p - 1))} 
                 disabled={currentPage === 1}
                 className="btn btn-outline" 
-                style={{ padding: "0.4rem 0.8rem", opacity: currentPage === 1 ? 0.5 : 1 }}
+                style={{ padding: "0.3rem 0.6rem", fontSize: "0.75rem", opacity: currentPage === 1 ? 0.5 : 1 }}
               >
-                Sebelumnya
+                Sebelumn
               </button>
-              <div style={{ display: "flex", alignItems: "center", padding: "0 0.5rem", fontWeight: "600" }}>
+              <div style={{ display: "flex", alignItems: "center", padding: "0 0.5rem", fontWeight: "600", fontSize: "0.75rem" }}>
                 {currentPage} / {totalPages}
               </div>
               <button 
                 onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} 
                 disabled={currentPage === totalPages}
                 className="btn btn-outline" 
-                style={{ padding: "0.4rem 0.8rem", opacity: currentPage === totalPages ? 0.5 : 1 }}
+                style={{ padding: "0.3rem 0.6rem", fontSize: "0.75rem", opacity: currentPage === totalPages ? 0.5 : 1 }}
               >
-                Selanjutnya
+                Lanjut
               </button>
             </div>
           </div>
         )}
       </div>
-
-      {/* Modal */}
-      {isModalOpen && (
-        <div style={{ position: "fixed", inset: 0, backgroundColor: "rgba(0,0,0,0.6)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 50, padding: "1rem", backdropFilter: "blur(4px)" }}>
-          <div className="card animate-fade-in" style={{ width: "100%", maxWidth: "500px", boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem", paddingBottom: "1rem", borderBottom: "1px solid var(--border-color)" }}>
-              <h2 style={{ fontSize: "1.25rem", fontWeight: "700" }}>Catat Pengeluaran Baru</h2>
-              <button onClick={() => setIsModalOpen(false)} className="btn btn-outline" style={{ padding: "0.4rem", borderColor: "transparent", borderRadius: "50%", backgroundColor: "var(--bg-color)" }}>
-                <X size={20} />
-              </button>
-            </div>
-
-            <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}>
-              <div>
-                <label className="label">Keterangan / Deskripsi Pengeluaran</label>
-                <input type="text" className="input" placeholder="Contoh: Beli domain, langganan server..." value={formData.description} onChange={(e) => setFormData({...formData, description: e.target.value})} required />
-              </div>
-
-              <div>
-                <label className="label">Jumlah Pengeluaran (Rp)</label>
-                <div style={{ position: "relative" }}>
-                  <span style={{ position: "absolute", left: "1rem", top: "50%", transform: "translateY(-50%)", color: "var(--text-muted)", fontWeight: "600" }}>Rp</span>
-                  <input type="number" className="input" style={{ paddingLeft: "2.5rem" }} value={formData.amount} onChange={(e) => setFormData({...formData, amount: e.target.value})} required placeholder="0" />
-                </div>
-              </div>
-
-              <div>
-                <label className="label">Tanggal Pengeluaran</label>
-                <input type="date" className="input" value={formData.date} onChange={(e) => setFormData({...formData, date: e.target.value})} required />
-              </div>
-
-              <div style={{ display: "flex", justifyContent: "flex-end", gap: "1rem", marginTop: "1rem", paddingTop: "1rem", borderTop: "1px solid var(--border-color)" }}>
-                <button type="button" onClick={() => setIsModalOpen(false)} className="btn btn-outline" style={{ minWidth: "100px" }}>Batal</button>
-                <button type="submit" className="btn btn-primary" style={{ minWidth: "120px" }}>Simpan Data</button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
