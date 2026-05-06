@@ -33,7 +33,7 @@ export default function ProjectClient({ initialProjects, clients }: { initialPro
   
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
-  const rowsPerPage = 10;
+  const rowsPerPage = 5;
 
   const handleOpenModal = (project: any = null) => {
     if (project) {
@@ -93,7 +93,8 @@ export default function ProjectClient({ initialProjects, clients }: { initialPro
   };
 
   const filteredProjects = useMemo(() => {
-    return projects.filter(p => {
+    const sorted = [...projects].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    return sorted.filter(p => {
       const matchSearch = p.projectName.toLowerCase().includes(searchTerm.toLowerCase());
       const matchStatus = filterStatus === "Semua" || p.status === filterStatus;
       const matchClient = filterClient === "Semua" || p.clientId?.toString() === filterClient;
@@ -327,14 +328,15 @@ export default function ProjectClient({ initialProjects, clients }: { initialPro
               <th>Status</th>
               <th>Harga</th>
               <th>Pembayaran</th>
-              <th>Link / Catatan</th>
+              <th>Link</th>
+              <th>Catatan</th>
               <th style={{ textAlign: "right" }}>Aksi</th>
             </tr>
           </thead>
           <tbody>
             {paginatedProjects.length === 0 ? (
               <tr>
-                <td colSpan={11} style={{ textAlign: "center", color: "var(--text-muted)", padding: "2rem 0" }}>Tidak ada data kerjaan di bulan ini.</td>
+                <td colSpan={12} style={{ textAlign: "center", color: "var(--text-muted)", padding: "2rem 0" }}>Tidak ada data kerjaan di bulan ini.</td>
               </tr>
             ) : (
               paginatedProjects.map((p, i) => (
@@ -353,10 +355,10 @@ export default function ProjectClient({ initialProjects, clients }: { initialPro
                     </span>
                   </td>
                   <td>
-                    <div style={{ display: "flex", flexDirection: "column", gap: "0.25rem" }}>
-                      {p.linkUrl && <a href={p.linkUrl} target="_blank" style={{ color: "var(--primary)", textDecoration: "underline", fontSize: "0.75rem" }}>Link</a>}
-                      {p.notes && <span style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>{p.notes}</span>}
-                    </div>
+                    {p.linkUrl ? <a href={p.linkUrl} target="_blank" style={{ color: "var(--primary)", textDecoration: "underline", fontSize: "0.75rem" }}>Link</a> : "-"}
+                  </td>
+                  <td>
+                    {p.notes ? <span style={{ fontSize: "0.75rem", color: "var(--text-muted)", maxWidth: "150px", display: "inline-block", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }} title={p.notes}>{p.notes}</span> : "-"}
                   </td>
                   <td>
                     <div style={{ display: "flex", gap: "0.5rem", justifyContent: "flex-end" }}>

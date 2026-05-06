@@ -49,10 +49,10 @@ export default async function DashboardPage() {
   }));
 
   const stats = [
-    { label: "Total Kerjaan (Bulan Ini)", value: totalKerjaanBulanIni, icon: <Briefcase size={24} className="text-blue-500" />, color: "var(--info)" },
-    { label: "Kerjaan Progress", value: totalProgress, icon: <Clock size={24} className="text-yellow-500" />, color: "var(--warning)" },
-    { label: "Kerjaan Selesai", value: totalSelesai, icon: <CheckCircle size={24} className="text-green-500" />, color: "var(--success)" },
-    { label: "Belum Selesai", value: totalBelumSelesai, icon: <XCircle size={24} className="text-red-500" />, color: "var(--danger)" },
+    { label: "Total Kerjaan (Bulan Ini)", value: totalKerjaanBulanIni, icon: <Briefcase size={16} />, color: "var(--info)" },
+    { label: "Kerjaan Progress", value: totalProgress, icon: <Clock size={16} />, color: "var(--warning)" },
+    { label: "Kerjaan Selesai", value: totalSelesai, icon: <CheckCircle size={16} />, color: "var(--success)" },
+    { label: "Belum Selesai", value: totalBelumSelesai, icon: <XCircle size={16} />, color: "var(--danger)" },
   ];
 
   const clientStats = [
@@ -77,14 +77,18 @@ export default async function DashboardPage() {
       </div>
 
       <div className="grid grid-cols-4" style={{ marginBottom: "1rem", gap: "1rem" }}>
-        <div className="card" style={{ borderTop: "4px solid var(--info)", padding: "1rem" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.25rem", color: "var(--text-muted)" }}>
-            <Briefcase size={16} />
-            <p style={{ fontSize: "0.75rem", fontWeight: "600", textTransform: "uppercase", letterSpacing: "0.05em" }}>Total Kerjaan (Bulan Ini)</p>
+        {stats.map((s, i) => (
+          <div key={i} className="card" style={{ borderTop: `4px solid ${s.color}`, padding: "1rem" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.25rem", color: "var(--text-muted)" }}>
+              {s.icon}
+              <p style={{ fontSize: "0.75rem", fontWeight: "600", textTransform: "uppercase", letterSpacing: "0.05em" }}>{s.label}</p>
+            </div>
+            <h3 style={{ fontSize: "1.5rem", fontWeight: "800", color: "var(--text-main)" }}>{s.value}</h3>
           </div>
-          <h3 style={{ fontSize: "1.5rem", fontWeight: "800", color: "var(--text-main)" }}>{totalKerjaanBulanIni}</h3>
-        </div>
+        ))}
+      </div>
 
+      <div className="grid grid-cols-4" style={{ marginBottom: "1rem", gap: "1rem" }}>
         <div className="card" style={{ borderTop: "4px solid var(--success)", padding: "1rem" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.25rem", color: "var(--text-muted)" }}>
             <Wallet size={16} />
@@ -107,6 +111,14 @@ export default async function DashboardPage() {
             <p style={{ fontSize: "0.75rem", fontWeight: "600", textTransform: "uppercase", letterSpacing: "0.05em" }}>Total Uang (Saldo)</p>
           </div>
           <h3 style={{ fontSize: "1.5rem", fontWeight: "800", color: saldo >= 0 ? "var(--primary)" : "var(--danger)" }}>{formatRp(saldo)}</h3>
+        </div>
+
+        <div className="card" style={{ borderTop: "4px solid var(--info)", padding: "1rem" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.25rem", color: "var(--text-muted)" }}>
+            <Users size={16} />
+            <p style={{ fontSize: "0.75rem", fontWeight: "600", textTransform: "uppercase", letterSpacing: "0.05em" }}>Client Aktif</p>
+          </div>
+          <h3 style={{ fontSize: "1.5rem", fontWeight: "800", color: "var(--info)" }}>{activeClients}</h3>
         </div>
       </div>
 

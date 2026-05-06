@@ -13,15 +13,17 @@ export default function ClientClient({ initialClients }: { initialClients: any[]
     name: "",
     socialMedia: "",
     followers: "",
+    initialFollowers: "",
     isActive: "true",
     createdAt: new Date().toISOString().split('T')[0],
+    leftAt: "",
   });
 
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState("Semua");
   
   const [currentPage, setCurrentPage] = useState(1);
-  const rowsPerPage = 10;
+  const rowsPerPage = 5;
 
   const handleOpenModal = (client: any = null) => {
     if (client) {
@@ -30,8 +32,10 @@ export default function ClientClient({ initialClients }: { initialClients: any[]
         name: client.name,
         socialMedia: client.socialMedia || "",
         followers: client.followers || "",
+        initialFollowers: client.initialFollowers || "",
         isActive: client.isActive ? "true" : "false",
         createdAt: new Date(client.createdAt).toISOString().split('T')[0],
+        leftAt: client.leftAt ? new Date(client.leftAt).toISOString().split('T')[0] : "",
       });
     } else {
       setEditingId(null);
@@ -39,8 +43,10 @@ export default function ClientClient({ initialClients }: { initialClients: any[]
         name: "",
         socialMedia: "",
         followers: "",
+        initialFollowers: "",
         isActive: "true",
         createdAt: new Date().toISOString().split('T')[0],
+        leftAt: "",
       });
     }
     setIsModalOpen(true);
@@ -48,11 +54,21 @@ export default function ClientClient({ initialClients }: { initialClients: any[]
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Auto-clear leftAt if active
+    let dataToSubmit = { ...formData };
+    if (dataToSubmit.isActive === "true") {
+      dataToSubmit.leftAt = "";
+    } else if (dataToSubmit.isActive === "false" && !dataToSubmit.leftAt) {
+      alert("Tanggal Keluar wajib diisi jika status Tidak Aktif");
+      return;
+    }
+
     if (editingId) {
-      await updateClient(editingId, formData);
+      await updateClient(editingId, dataToSubmit);
       window.location.reload(); 
     } else {
-      await createClient(formData);
+      await createClient(dataToSubmit);
       window.location.reload(); 
     }
     setIsModalOpen(false);
@@ -66,7 +82,8 @@ export default function ClientClient({ initialClients }: { initialClients: any[]
   };
 
   const filteredClients = useMemo(() => {
-    return clients.filter(c => {
+    const sorted = [...clients].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    return sorted.filter(c => {
       const matchSearch = c.name.toLowerCase().includes(searchTerm.toLowerCase());
       let matchStatus = true;
       if (filterStatus === "Aktif") matchStatus = c.isActive === true;
@@ -105,12 +122,18 @@ export default function ClientClient({ initialClients }: { initialClients: any[]
             <input type="text" className="input" value={formData.socialMedia} onChange={(e) => setFormData({...formData, socialMedia: e.target.value})} placeholder="Contoh: Instagram @budi" />
           </div>
 
-          <div>
-            <label className="label">Total Followers / Subs</label>
-            <input type="text" className="input" value={formData.followers} onChange={(e) => setFormData({...formData, followers: e.target.value})} placeholder="Contoh: 1.5M" />
+          <div className="grid grid-cols-2">
+            <div>
+              <label className="label">Followers Awal (Saat Gabung)</label>
+              <input type="text" className="input" value={formData.initialFollowers} onChange={(e) => setFormData({...formData, initialFollowers: e.target.value})} placeholder="Contoh: 100K" />
+            </div>
+            <div>
+              <label className="label">Followers Saat Ini</label>
+              <input type="text" className="input" value={formData.followers} onChange={(e) => setFormData({...formData, followers: e.target.value})} placeholder="Contoh: 1.5M" />
+            </div>
           </div>
 
-          <div className="grid grid-cols-2">
+          <div className="grid grid-cols-3">
             <div>
               <label className="label">Tanggal Gabung</label>
               <input type="date" className="input" value={formData.createdAt} onChange={(e) => setFormData({...formData, createdAt: e.target.value})} required />
@@ -121,6 +144,10 @@ export default function ClientClient({ initialClients }: { initialClients: any[]
                 <option value="true">Aktif</option>
                 <option value="false">Tidak Aktif</option>
               </select>
+            </div>
+            <div>
+              <label className="label">Tanggal Keluar</label>
+              <input type="date" className="input" value={formData.leftAt} onChange={(e) => setFormData({...formData, leftAt: e.target.value})} disabled={formData.isActive === "true"} style={{ opacity: formData.isActive === "true" ? 0.5 : 1 }} required={formData.isActive === "false"} />
             </div>
           </div>
 
@@ -172,8 +199,10 @@ export default function ClientClient({ initialClients }: { initialClients: any[]
               <th>No</th>
               <th>Nama Client</th>
               <th>Channel / Sosmed</th>
-              <th>Followers / Subs</th>
+              <th>Followers Awal</th>
+              <th>Followers Skrg</th>
               <th>Tgl Gabung</th>
+              <th>Tgl Keluar</th>
               <th>Status</th>
               <th style={{ textAlign: "right" }}>Aksi</th>
             </tr>
@@ -181,7 +210,7 @@ export default function ClientClient({ initialClients }: { initialClients: any[]
           <tbody>
             {paginatedClients.length === 0 ? (
               <tr>
-                <td colSpan={7} style={{ textAlign: "center", color: "var(--text-muted)", padding: "2rem 0" }}>Tidak ada data client.</td>
+                <td colSpan={9} style={{ textAlign: "center", color: "var(--text-muted)", padding: "2rem 0" }}>Tidak ada data client.</td>
               </tr>
             ) : (
               paginatedClients.map((c, i) => (
@@ -189,8 +218,10 @@ export default function ClientClient({ initialClients }: { initialClients: any[]
                   <td>{(currentPage - 1) * rowsPerPage + i + 1}</td>
                   <td style={{ fontWeight: "600" }}>{c.name}</td>
                   <td>{c.socialMedia || "-"}</td>
+                  <td>{c.initialFollowers || "-"}</td>
                   <td>{c.followers || "-"}</td>
                   <td>{new Date(c.createdAt).toLocaleDateString("id-ID")}</td>
+                  <td>{c.leftAt ? new Date(c.leftAt).toLocaleDateString("id-ID") : "-"}</td>
                   <td>
                     <span className={`badge ${c.isActive ? "badge-success" : "badge-danger"}`}>
                       {c.isActive ? "Aktif" : "Tidak Aktif"}
@@ -213,7 +244,6 @@ export default function ClientClient({ initialClients }: { initialClients: any[]
         </table>
       </div>
 
-      {/* Pagination UI */}
       {totalPages > 1 && (
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "1rem", paddingTop: "1rem", borderTop: "1px solid var(--border-color)" }}>
           <div style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>

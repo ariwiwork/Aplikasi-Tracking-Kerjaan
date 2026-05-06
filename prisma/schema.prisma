@@ -14,13 +14,15 @@ model User {
 }
 
 model Client {
-  id          Int       @id @default(autoincrement())
-  name        String
-  socialMedia String?
-  followers   String?
-  isActive    Boolean   @default(true)
-  createdAt   DateTime  @default(now())
-  projects    Project[]
+  id               Int       @id @default(autoincrement())
+  name             String
+  socialMedia      String?
+  followers        String?
+  initialFollowers String?
+  isActive         Boolean   @default(true)
+  createdAt        DateTime  @default(now())
+  leftAt           DateTime?
+  projects         Project[]
 }
 
 model Project {

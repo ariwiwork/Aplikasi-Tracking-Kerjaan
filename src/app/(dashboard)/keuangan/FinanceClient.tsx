@@ -22,7 +22,7 @@ export default function FinanceClient({ initialLedger }: { initialLedger: any[] 
 
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
-  const rowsPerPage = 10;
+  const rowsPerPage = 5;
 
   const handleOpenModal = () => {
     setFormData({
@@ -47,7 +47,8 @@ export default function FinanceClient({ initialLedger }: { initialLedger: any[] 
   };
 
   const filteredLedger = useMemo(() => {
-    return ledger.filter(l => {
+    const sorted = [...ledger].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    return sorted.filter(l => {
       const matchSearch = l.description.toLowerCase().includes(searchTerm.toLowerCase());
       const matchType = filterType === "Semua" || l.type === filterType;
       

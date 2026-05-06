@@ -11,8 +11,12 @@ export async function createClient(data: any) {
       socialMedia: data.socialMedia,
       // @ts-ignore
       followers: data.followers,
+      // @ts-ignore
+      initialFollowers: data.initialFollowers,
       isActive: data.isActive === "true" || data.isActive === true,
       createdAt: data.createdAt ? new Date(data.createdAt) : new Date(),
+      // @ts-ignore
+      leftAt: data.leftAt ? new Date(data.leftAt) : null,
     }
   });
   revalidatePath("/client");
@@ -28,8 +32,12 @@ export async function updateClient(id: number, data: any) {
       socialMedia: data.socialMedia,
       // @ts-ignore
       followers: data.followers,
+      // @ts-ignore
+      initialFollowers: data.initialFollowers,
       isActive: data.isActive === "true" || data.isActive === true,
       createdAt: data.createdAt ? new Date(data.createdAt) : undefined,
+      // @ts-ignore
+      leftAt: data.leftAt ? new Date(data.leftAt) : null,
     }
   });
   revalidatePath("/client");
