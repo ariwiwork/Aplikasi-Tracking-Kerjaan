@@ -132,7 +132,7 @@ export default async function DashboardPage() {
       <div className="card" style={{ marginBottom: "2rem" }}>
         <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "1.5rem" }}>
           <BarChart2 size={20} color="var(--primary)" />
-          <h2 style={{ fontSize: "1.25rem", fontWeight: "600" }}>Performa Pendapatan per Bulan</h2>
+          <h2 style={{ fontSize: "1.25rem", fontWeight: "600" }}>Performa Kerjaan Bulan Ini</h2>
         </div>
         <DashboardChart data={chartData} />
       </div>

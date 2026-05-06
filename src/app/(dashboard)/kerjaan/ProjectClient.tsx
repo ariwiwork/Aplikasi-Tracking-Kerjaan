@@ -6,7 +6,7 @@ import { FileDown, Plus, Pencil, Trash2, X, Search, Filter } from "lucide-react"
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
-export default function ProjectClient({ initialProjects }: { initialProjects: any[] }) {
+export default function ProjectClient({ initialProjects, clients }: { initialProjects: any[], clients: any[] }) {
   const [projects, setProjects] = useState(initialProjects);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
@@ -22,11 +22,13 @@ export default function ProjectClient({ initialProjects }: { initialProjects: an
     paymentStatus: "Belum Bayar",
     linkUrl: "",
     notes: "",
+    clientId: "",
   });
 
   // Filter & Search state
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState("Semua");
+  const [filterClient, setFilterClient] = useState("Semua");
   const [activeTabMonth, setActiveTabMonth] = useState((new Date().getMonth() + 1).toString());
   
   // Pagination
@@ -46,6 +48,7 @@ export default function ProjectClient({ initialProjects }: { initialProjects: an
         paymentStatus: project.paymentStatus,
         linkUrl: project.linkUrl || "",
         notes: project.notes || "",
+        clientId: project.clientId?.toString() || "",
       });
     } else {
       setEditingId(null);
@@ -59,6 +62,7 @@ export default function ProjectClient({ initialProjects }: { initialProjects: an
         paymentStatus: "Belum Bayar",
         linkUrl: "",
         notes: "",
+        clientId: clients.length > 0 ? clients[0].id.toString() : "",
       });
     }
     setIsModalOpen(true);
@@ -66,11 +70,16 @@ export default function ProjectClient({ initialProjects }: { initialProjects: an
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const dataToSubmit = {
+      ...formData,
+      clientId: formData.clientId ? parseInt(formData.clientId) : null
+    };
+
     if (editingId) {
-      await updateProject(editingId, formData);
-      setProjects(projects.map(p => p.id === editingId ? { ...p, ...formData, price: parseFloat(formData.price) || 0 } : p));
+      await updateProject(editingId, dataToSubmit);
+      window.location.reload(); 
     } else {
-      await createProject(formData);
+      await createProject(dataToSubmit);
       window.location.reload(); 
     }
     setIsModalOpen(false);
@@ -87,18 +96,19 @@ export default function ProjectClient({ initialProjects }: { initialProjects: an
     return projects.filter(p => {
       const matchSearch = p.projectName.toLowerCase().includes(searchTerm.toLowerCase());
       const matchStatus = filterStatus === "Semua" || p.status === filterStatus;
+      const matchClient = filterClient === "Semua" || p.clientId?.toString() === filterClient;
       
       const monthNum = new Date(p.startDate).getMonth() + 1;
       const matchMonth = monthNum.toString() === activeTabMonth;
 
-      return matchSearch && matchStatus && matchMonth;
+      return matchSearch && matchStatus && matchMonth && matchClient;
     });
-  }, [projects, searchTerm, filterStatus, activeTabMonth]);
+  }, [projects, searchTerm, filterStatus, activeTabMonth, filterClient]);
 
   // Reset page when filters change
   useMemo(() => {
     setCurrentPage(1);
-  }, [searchTerm, filterStatus, activeTabMonth]);
+  }, [searchTerm, filterStatus, activeTabMonth, filterClient]);
 
   const totalPages = Math.ceil(filteredProjects.length / rowsPerPage);
   const paginatedProjects = filteredProjects.slice((currentPage - 1) * rowsPerPage, currentPage * rowsPerPage);
@@ -110,6 +120,7 @@ export default function ProjectClient({ initialProjects }: { initialProjects: an
     const tableData = filteredProjects.map((p, i) => [
       i + 1,
       p.projectName,
+      p.client?.name || "-",
       p.duration,
       new Date(p.startDate).toLocaleDateString("id-ID"),
       p.status,
@@ -118,7 +129,7 @@ export default function ProjectClient({ initialProjects }: { initialProjects: an
     ]);
 
     autoTable(doc, {
-      head: [["No", "Nama Project", "Durasi", "Tgl Mulai", "Status", "Harga", "Pembayaran"]],
+      head: [["No", "Nama Project", "Client", "Durasi", "Tgl Mulai", "Status", "Harga", "Pembayaran"]],
       body: tableData,
       startY: 20,
     });
@@ -196,6 +207,10 @@ export default function ProjectClient({ initialProjects }: { initialProjects: an
         
         <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
           <Filter size={18} style={{ color: "var(--text-muted)" }} />
+          <select className="input" style={{ width: "auto" }} value={filterClient} onChange={(e) => setFilterClient(e.target.value)}>
+            <option value="Semua">Semua Client</option>
+            {clients.map(c => <option key={c.id} value={c.id.toString()}>{c.name}</option>)}
+          </select>
           <select className="input" style={{ width: "auto" }} value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)}>
             <option value="Semua">Semua Status</option>
             <option value="Progress">Progress</option>
@@ -211,32 +226,43 @@ export default function ProjectClient({ initialProjects }: { initialProjects: an
             <tr>
               <th>No</th>
               <th>Nama Project</th>
+              <th>Client</th>
               <th>Durasi</th>
               <th>Tgl Mulai</th>
+              <th>Tgl Selesai</th>
               <th>Status</th>
               <th>Harga</th>
               <th>Pembayaran</th>
+              <th>Link / Catatan</th>
               <th style={{ textAlign: "right" }}>Aksi</th>
             </tr>
           </thead>
           <tbody>
-            {filteredProjects.length === 0 ? (
+            {paginatedProjects.length === 0 ? (
               <tr>
-                <td colSpan={8} style={{ textAlign: "center", color: "var(--text-muted)", padding: "3rem 0" }}>Tidak ada data kerjaan di bulan ini.</td>
+                <td colSpan={11} style={{ textAlign: "center", color: "var(--text-muted)", padding: "3rem 0" }}>Tidak ada data kerjaan di bulan ini.</td>
               </tr>
             ) : (
               paginatedProjects.map((p, i) => (
                 <tr key={p.id}>
                   <td>{(currentPage - 1) * rowsPerPage + i + 1}</td>
                   <td style={{ fontWeight: "600" }}>{p.projectName}</td>
+                  <td>{p.client?.name || "-"}</td>
                   <td>{p.duration}</td>
                   <td>{new Date(p.startDate).toLocaleDateString("id-ID")}</td>
+                  <td>{p.endDate ? new Date(p.endDate).toLocaleDateString("id-ID") : "-"}</td>
                   <td><span className={`badge ${getStatusBadge(p.status)}`}>{p.status}</span></td>
                   <td style={{ fontWeight: "600" }}>{formatRp(p.price)}</td>
                   <td>
                     <span className={`badge ${["Bank", "E Wallet"].includes(p.paymentStatus) ? "badge-success" : "badge-warning"}`}>
                       {p.paymentStatus}
                     </span>
+                  </td>
+                  <td>
+                    <div style={{ display: "flex", flexDirection: "column", gap: "0.25rem" }}>
+                      {p.linkUrl && <a href={p.linkUrl} target="_blank" style={{ color: "var(--primary)", textDecoration: "underline", fontSize: "0.75rem" }}>Link</a>}
+                      {p.notes && <span style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>{p.notes}</span>}
+                    </div>
                   </td>
                   <td>
                     <div style={{ display: "flex", gap: "0.5rem", justifyContent: "flex-end" }}>
@@ -303,9 +329,27 @@ export default function ProjectClient({ initialProjects }: { initialProjects: an
                   <input type="text" className="input" value={formData.projectName} onChange={(e) => setFormData({...formData, projectName: e.target.value})} required placeholder="Contoh: Desain Banner" />
                 </div>
                 <div>
+                  <label className="label">Client</label>
+                  <select className="input" value={formData.clientId} onChange={(e) => setFormData({...formData, clientId: e.target.value})} required>
+                    <option value="" disabled>Pilih Client</option>
+                    {clients.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2">
+                <div>
                   <label className="label">Durasi (Menit)</label>
                   <select className="input" value={formData.duration} onChange={(e) => setFormData({...formData, duration: e.target.value})} required>
                     {durationOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="label">Status Project</label>
+                  <select className="input" value={formData.status} onChange={(e) => setFormData({...formData, status: e.target.value})} required>
+                    <option value="Progress">Progress</option>
+                    <option value="Selesai">Selesai</option>
+                    <option value="Belum Selesai">Belum Selesai</option>
                   </select>
                 </div>
               </div>
@@ -323,14 +367,6 @@ export default function ProjectClient({ initialProjects }: { initialProjects: an
 
               <div className="grid grid-cols-2">
                 <div>
-                  <label className="label">Status Project</label>
-                  <select className="input" value={formData.status} onChange={(e) => setFormData({...formData, status: e.target.value})} required>
-                    <option value="Progress">Progress</option>
-                    <option value="Selesai">Selesai</option>
-                    <option value="Belum Selesai">Belum Selesai</option>
-                  </select>
-                </div>
-                <div>
                   <label className="label">Pembayaran</label>
                   <select className="input" value={formData.paymentStatus} onChange={(e) => setFormData({...formData, paymentStatus: e.target.value})} required>
                     <option value="Belum Bayar">Belum Bayar</option>
@@ -338,9 +374,6 @@ export default function ProjectClient({ initialProjects }: { initialProjects: an
                     <option value="E Wallet">E Wallet</option>
                   </select>
                 </div>
-              </div>
-
-              <div className="grid grid-cols-1">
                 <div>
                   <label className="label">Harga Project (Rp)</label>
                   <select className="input" value={formData.price} onChange={(e) => setFormData({...formData, price: e.target.value})} required>

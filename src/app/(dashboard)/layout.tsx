@@ -4,7 +4,7 @@ import { useSession, signOut } from "next-auth/react";
 import { useRouter, usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { LayoutDashboard, Briefcase, Wallet, LogOut, Menu, X, User } from "lucide-react";
+import { LayoutDashboard, Briefcase, Wallet, LogOut, Menu, X, User, Users } from "lucide-react";
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const { data: session, status } = useSession();
@@ -29,6 +29,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   const menuItems = [
     { name: "Dashboard", href: "/", icon: <LayoutDashboard size={20} /> },
+    { name: "Client", href: "/client", icon: <Users size={20} /> },
     { name: "Kerjaan", href: "/kerjaan", icon: <Briefcase size={20} /> },
     { name: "Keuangan", href: "/keuangan", icon: <Wallet size={20} /> },
   ];

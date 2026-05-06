@@ -15,7 +15,7 @@ export async function createProject(data: any) {
       paymentStatus: data.paymentStatus,
       linkUrl: data.linkUrl,
       notes: data.notes,
-      fileUrl: data.fileUrl,
+      clientId: data.clientId,
     }
   });
   revalidatePath("/kerjaan");
@@ -35,7 +35,7 @@ export async function updateProject(id: number, data: any) {
       paymentStatus: data.paymentStatus,
       linkUrl: data.linkUrl,
       notes: data.notes,
-      fileUrl: data.fileUrl,
+      clientId: data.clientId,
     }
   });
   revalidatePath("/kerjaan");
